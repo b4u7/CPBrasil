@@ -8,7 +8,9 @@
     "build": "electron-builder build --win --ia32 --publish never",
     "build-mac": "electron-builder build --mac --ia32 --publish never",
     "build-linux": "electron-builder build --linux --ia32 --publish never",
-    "appveyor-build": "electron-builder build --win --publish onTagOrDraft"
+    "appveyor-build": "electron-builder build --win --publish onTagOrDraft",
+    "lint": "prettier -c .",
+    "lint-fix": "prettier -w ."
   },
   "bugs": {
     "url": "https://github.com/Julian45123/CPBrasil/issues"
