@@ -1,8 +1,6 @@
 const { app, BrowserWindow } = require('electron')
-const { autoUpdater } = require('electron-updater')
-const DiscordRPC = require('discord-rpc')
-
 const path = require('path')
+const DiscordRPC = require('discord-rpc')
 
 let pluginName
 switch (process.platform) {
@@ -16,51 +14,69 @@ switch (process.platform) {
     pluginName = 'flash/libpepflashplayer.so'
     break
 }
-app.commandLine.appendSwitch('ppapi-flash-path', path.join(__dirname, pluginName))
 
-autoUpdater.checkForUpdatesAndNotify()
-let mainWindow
+app.commandLine.appendSwitch('ppapi-flash-path', path.join(__dirname, pluginName))
+app.commandLine.appendSwitch('ppapi-flash-version', '32_32_0_0_303')
 
 function createWindow() {
-  mainWindow = new BrowserWindow({
+  const mainWindow = new BrowserWindow({
     width: 1280,
     height: 720,
+    show: false,
     title: 'Connecting...',
     icon: __dirname + '/favicon.ico',
+    backgroundColor: '#22a4f3',
     webPreferences: {
       plugins: true,
     },
   })
-  mainWindow.maximize()
 
-  mainWindow.setMenu(null)
-  mainWindow.loadURL('https://cpbrasil.pw/play/')
-
-  const clientId = '815061695831212093'
-  DiscordRPC.register(clientId)
-  const rpc = new DiscordRPC.Client({ transport: 'ipc' })
-  const startTimestamp = new Date()
-  rpc.on('ready', () => {
-    rpc.setActivity({
-      details: `Pinguinando`,
-      state: `cpbrasil.pw`,
-      startTimestamp,
-      largeImageKey: `main-logo`, //,
-    })
-  })
-  rpc.login({ clientId }).catch(console.error)
-
-  mainWindow.on('closed', function () {
-    mainWindow = null
+  mainWindow.loadURL('https://cpbrasil.pw/play/').then(() => {
+    mainWindow.maximize()
+    mainWindow.setMenu(null)
+    mainWindow.show()
   })
 }
 
-app.on('ready', createWindow)
+app.whenReady().then(() => {
+  createWindow()
+})
 
 app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit()
+  if (process.platform !== 'darwin') {
+    app.quit()
+  }
 })
 
 app.on('activate', function () {
-  if (mainWindow === null) createWindow()
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow()
+  }
 })
+
+const clientId = '815061695831212093'
+const startTimestamp = new Date()
+const rpc = new DiscordRPC.Client({ transport: 'ipc' })
+
+async function setActivity() {
+  if (!rpc) {
+    return
+  }
+
+  await rpc.setActivity({
+    details: `Pinguinando`,
+    state: `cpbrasil.pw`,
+    startTimestamp,
+    largeImageKey: `main-logo`,
+  })
+}
+
+rpc.on('ready', async () => {
+  await setActivity()
+
+  setInterval(() => {
+    setActivity()
+  }, 15e3)
+})
+
+rpc.login({ clientId }).catch(console.error)
